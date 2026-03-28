@@ -1,0 +1,9 @@
+venv/
+scripts/
+backend/
+__pycache__/
+node_modules/
+*.bat
+*.txt
+*.md
+!index.html
