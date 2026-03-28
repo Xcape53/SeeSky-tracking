@@ -84,6 +84,15 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
   const errEl = document.getElementById("login-error");
   errEl.hidden = true;
+
+  // Demo mode — logowanie bez backendu
+  if (typeof DEMO_MODE !== "undefined" && DEMO_MODE) {
+    token = "demo";
+    document.getElementById("login-screen").hidden = true;
+    document.getElementById("dashboard").hidden = false;
+    return;
+  }
+
   try {
     const data = await api("POST", "/api/auth/login", {
       username: document.getElementById("login-user").value,
