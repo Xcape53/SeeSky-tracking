@@ -1,0 +1,28 @@
+# Virtual environment
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Data files (downloaded, not tracked in git)
+scripts/data/
+backend/database/star_catalog.db
+
+# Node.js
+node_modules/
+frontend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Screenshots / temp files
+/Screenshot*

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SeeSky - Tracking Radioteleskopowy</title>
+  <link rel="icon" type="image/png" href="/images/seesky.png">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/d3-celestial@0.7.35/celestial.css">
+</head>
+<body>
+  <!-- Ekran logowania -->
+  <div id="login-screen" class="screen">
+    <canvas id="star-canvas"></canvas>
+    <div class="login-box">
+      <img src="/images/seesky.svg" alt="SeeSky" class="login-logo">
+      <h1>SeeSky</h1>
+      <p class="subtitle">System trackingu radioteleskopowego</p>
+      <form id="login-form">
+        <input type="text" id="login-user" placeholder="Nazwa uzytkownika" value="operator" required>
+        <input type="password" id="login-pass" placeholder="Haslo" required>
+        <button type="submit">Zaloguj</button>
+        <p id="login-error" class="error" hidden></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Glowny dashboard -->
+  <div id="dashboard" class="screen" hidden>
+    <header>
+      <div class="header-brand">
+        <img src="/images/seesky.svg" alt="SeeSky" class="header-logo">
+        <h1>SeeSky</h1>
+      </div>
+      <nav>
+        <button class="nav-btn active" data-tab="tracking">Tracking</button>
+        <button class="nav-btn" data-tab="catalog">Katalog</button>
+        <button class="nav-btn" data-tab="queue">Kolejka</button>
+        <button class="nav-btn" data-tab="config">Konfiguracja</button>
+        <button class="nav-btn" data-tab="calibration">Kalibracja</button>
+        <button class="nav-btn" data-tab="skymap">Mapa nieba</button>
+        <button id="logout-btn" class="nav-btn logout">Wyloguj</button>
+      </nav>
+    </header>
+
+    <!-- Tab: Tracking -->
+    <section id="tab-tracking" class="tab-content">
+      <h2>Status Trackingu</h2>
+      <div class="tracking-panel">
+        <div class="status-card">
+          <div class="status-indicator" id="tracking-indicator">NIEAKTYWNY</div>
+          <div id="tracking-star">-</div>
+          <div id="tracking-star-details" class="star-details"></div>
+        </div>
+        <div class="tracking-grid">
+          <div class="metric">
+            <span class="label">Aktualna Alt</span>
+            <span class="value" id="t-alt">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Aktualna Az</span>
+            <span class="value" id="t-az">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Docelowa Alt</span>
+            <span class="value" id="t-tgt-alt">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Docelowa Az</span>
+            <span class="value" id="t-tgt-az">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Delta Alt</span>
+            <span class="value" id="t-d-alt">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Delta Az</span>
+            <span class="value" id="t-d-az">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Predkosc Alt</span>
+            <span class="value" id="t-v-alt">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Predkosc Az</span>
+            <span class="value" id="t-v-az">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Odl. katowa</span>
+            <span class="value" id="t-ang-dist">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">RA / Dec</span>
+            <span class="value" id="t-radec">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Kat godzinny (HA)</span>
+            <span class="value" id="t-ha">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">LST (czas gwiazdowy)</span>
+            <span class="value" id="t-lst">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Czas trwania</span>
+            <span class="value" id="t-elapsed">-</span>
+          </div>
+          <div class="metric">
+            <span class="label">Pozostalo</span>
+            <span class="value" id="t-remaining">-</span>
+          </div>
+        </div>
+        <div class="tracking-controls">
+          <button id="btn-start" class="btn btn-green">Start</button>
+          <button id="btn-pause" class="btn btn-yellow" disabled>Pauza</button>
+          <button id="btn-resume" class="btn btn-blue" disabled>Wznow</button>
+          <button id="btn-stop" class="btn btn-red" disabled>Stop</button>
+        </div>
+        <div class="tracking-clock">
+          <span class="clock-label">UTC</span>
+          <span class="clock-value" id="clock-utc">--:--:--.---</span>
+          <span class="clock-sep">|</span>
+          <span class="clock-label">Lokalny</span>
+          <span class="clock-value" id="clock-local">--:--:--.---</span>
+          <span class="clock-sep">|</span>
+          <span class="clock-sync" id="clock-sync" title="Synchronizacja z serwerem czasu atomowego">NTP: ...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Katalog gwiazd -->
+    <section id="tab-catalog" class="tab-content" hidden>
+      <h2>Katalog Gwiazd</h2>
+      <div class="filters">
+        <input type="text" id="star-search" placeholder="Szukaj po nazwie...">
+        <input type="number" id="star-max-mag" placeholder="Max magnitudo" step="0.1">
+        <input type="text" id="star-constellation" placeholder="Gwiazdozbior (np. UMa)">
+        <button id="star-filter-btn" class="btn">Filtruj</button>
+      </div>
+      <table id="star-table">
+        <thead>
+          <tr>
+            <th>Nazwa</th>
+            <th>Gwiazdozbior</th>
+            <th>Magnitudo</th>
+            <th>RA (deg)</th>
+            <th>Dec (deg)</th>
+            <th>Akcje</th>
+          </tr>
+        </thead>
+        <tbody id="star-tbody"></tbody>
+      </table>
+      <div class="pagination">
+        <button id="star-prev" class="btn" disabled>&lt; Poprzednia</button>
+        <span id="star-page-info">1 / 1</span>
+        <button id="star-next" class="btn">Nastepna &gt;</button>
+      </div>
+    </section>
+
+    <!-- Tab: Kolejka obserwacji -->
+    <section id="tab-queue" class="tab-content" hidden>
+      <h2>Kolejka Obserwacji</h2>
+      <table id="queue-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Gwiazda</th>
+            <th>Czas (min)</th>
+            <th>Priorytet</th>
+            <th>Status</th>
+            <th>Akcje</th>
+          </tr>
+        </thead>
+        <tbody id="queue-tbody"></tbody>
+      </table>
+      <p id="queue-empty" hidden>Kolejka jest pusta. Dodaj obserwacje z katalogu gwiazd.</p>
+    </section>
+
+    <!-- Tab: Konfiguracja -->
+    <section id="tab-config" class="tab-content" hidden>
+      <h2>Konfiguracja Teleskopu</h2>
+      <form id="config-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Szerokosc geograficzna (deg)</label>
+            <input type="number" id="cfg-lat" step="0.0000001" required>
+          </div>
+          <div class="form-group">
+            <label>Dlugosc geograficzna (deg)</label>
+            <input type="number" id="cfg-lon" step="0.0000001" required>
+          </div>
+          <div class="form-group">
+            <label>Wysokosc n.p.m. (m)</label>
+            <input type="number" id="cfg-alt" step="1" required>
+          </div>
+          <div class="form-group">
+            <label>Interwal trackingu (s)</label>
+            <input type="number" id="cfg-interval" step="0.5" min="0.5" required>
+          </div>
+          <div class="form-group">
+            <label>Domyslny czas obserwacji (min)</label>
+            <input type="number" id="cfg-duration" min="1" required>
+          </div>
+          <div class="form-group">
+            <label>Cisnienie (hPa)</label>
+            <input type="number" id="cfg-pressure" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>Temperatura (C)</label>
+            <input type="number" id="cfg-temp" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>Wilgotnosc (0-1)</label>
+            <input type="number" id="cfg-humidity" step="0.01" min="0" max="1">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-green">Zapisz konfiguracje</button>
+        <p id="config-msg" class="success" hidden></p>
+      </form>
+    </section>
+
+    <!-- Tab: Kalibracja -->
+    <section id="tab-calibration" class="tab-content" hidden>
+      <h2>Kalibracja Teleskopu</h2>
+      <div class="calibration-status">
+        <div class="metric">
+          <span class="label">Status</span>
+          <span class="value" id="cal-status">-</span>
+        </div>
+        <div class="metric">
+          <span class="label">Offset Azymut</span>
+          <span class="value" id="cal-offset-az">-</span>
+        </div>
+        <div class="metric">
+          <span class="label">Offset Elewacja</span>
+          <span class="value" id="cal-offset-alt">-</span>
+        </div>
+        <div class="metric">
+          <span class="label">Ostatnia kalibracja</span>
+          <span class="value" id="cal-time">-</span>
+        </div>
+      </div>
+      <div class="calibration-controls">
+        <button id="btn-cal-polaris" class="btn btn-blue">Kalibruj na Polaris</button>
+        <button id="btn-cal-reset" class="btn btn-red">Resetuj kalibracje</button>
+      </div>
+      <p id="cal-msg" hidden></p>
+    </section>
+
+    <!-- Tab: Mapa nieba -->
+    <section id="tab-skymap" class="tab-content" hidden>
+      <h2>Mapa Nieba</h2>
+      <div class="skymap-info">
+        <span id="skymap-tracking-info">Tracking nieaktywny</span>
+      </div>
+      <div id="celestial-map"></div>
+      <div class="skymap-legend">
+        <span class="legend-item"><span class="legend-dot telescope-dot"></span> Pozycja teleskopu</span>
+        <span class="legend-item"><span class="legend-dot target-dot"></span> Cel obserwacji</span>
+        <span class="legend-item"><span class="legend-line horizon-line"></span> Horyzont (0&deg;)</span>
+        <span class="legend-item"><span class="legend-line altitude-line"></span> Pierscienie elewacji</span>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@3.5.17/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-celestial@0.7.35/lib/d3.geo.projection.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-celestial@0.7.35/celestial.min.js"></script>
+  <script>
+    // URL backendu Flask (wstrzykniety z EJS)
+    const API_URL = "<%= apiUrl %>";
+  </script>
+  <script src="/js/app.js"></script>
+  <script src="/js/stars-bg.js"></script>
+</body>
+</html>
