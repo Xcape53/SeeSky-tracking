@@ -1,91 +1,104 @@
 # SeeSky Tracking
 
-System sledzenia obiektow niebieskich dla radioteleskopu amatorskiego.
+SeeSky Tracking is a control and observation interface for an amateur radio telescope on an altitude-azimuth mount. It combines astronomical coordinate calculations, a REST API, an observation queue, and a browser-based control panel.
 
-## Architektura
+## System overview
 
-- **Backend** (Python 3.11 + Flask) - REST API z JWT, silnik trackingowy (Astropy), SQLite z katalogiem 119 626 gwiazd (HYG v4.1)
-- **Frontend** (Node.js + Express + EJS) - dashboard z 6 zakladkami: tracking, katalog gwiazd, kolejka obserwacji, konfiguracja, kalibracja, mapa nieba (d3-celestial)
+- Python and Flask backend with JWT authentication
+- Astropy-based conversion from right ascension and declination to altitude and azimuth
+- Tracking loop with start, stop, pause, resume, and predictive interpolation
+- SQLite catalog built from HYG v4.1 data
+- Node.js, Express, and EJS frontend
+- Interactive sky map, target browser, observation queue, configuration, and calibration views
 
-## Wymagania
+The software can run on a Raspberry Pi 4 or 5 or on a regular development computer. Hardware motor control is outside the current repository.
 
-- Python 3.11+
-- Node.js 18+
+## Requirements
 
-## Instalacja
+- Python 3.11 or newer
+- Node.js 18 or newer
+- npm
+
+## Installation
+
+Create and activate a Python environment from the repository root:
 
 ```bash
-# 1. Srodowisko Python
 python -m venv venv
-venv\Scripts\activate        # Windows
-pip install -r requirements.txt
-
-# 2. Katalog gwiazd
-cd scripts
-python download_hyg.py
-python parse_catalog.py
-cd ..
-
-# 3. Frontend
-cd frontend
-npm install
-cd ..
 ```
 
-## Uruchomienie
+Windows PowerShell:
 
-Odpal dwa terminale (albo uzyj `start_backend.bat` i `start_frontend.bat`):
+```powershell
+venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Download and convert the HYG star catalog:
 
 ```bash
-# Terminal 1 - Backend (port 5000)
-cd backend
-python app.py
+python scripts/download_hyg.py
+python scripts/parse_catalog.py
+```
 
-# Terminal 2 - Frontend (port 3000)
+Install frontend dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+## Running the system
+
+Start the backend in one terminal:
+
+```bash
+python backend/app.py
+```
+
+Start the frontend in another terminal:
+
+```bash
 cd frontend
 node server.js
 ```
 
-Otworz `http://localhost:3000` — login: `operator` / `operator123`
+Open `http://localhost:3000`.
 
-## Struktura projektu
+The repository contains development authentication defaults. Change the JWT secret and login credentials before exposing the service to another device or network.
 
-```
-tracking/
-  backend/
-    app.py              # Flask application factory
-    config.py           # Konfiguracja (JWT, GPS, atmosfera)
-    api/
-      routes.py         # 19 endpointow REST API
-    database/
-      models.py         # SQLite (gwiazdy, kolejka, config)
-    tracking/
-      position.py       # Transformacje RA/Dec -> Alt/Az (Astropy)
-      tracker.py        # Petla sledzenia z interpolacja
-  frontend/
-    server.js           # Express + EJS
-    views/
-      index.ejs         # SPA - login + dashboard
-    public/
-      css/style.css     # Dark theme, bordowe akcenty
-      js/app.js         # Logika klienta, mapa nieba
-      js/stars-bg.js    # Animowane tlo logowania
-      images/           # Logo SVG/PNG
-  scripts/
-    download_hyg.py     # Pobieranie katalogu HYG v4.1
-    parse_catalog.py    # Parsowanie CSV -> SQLite
-    test_position.py    # Testy obliczen pozycji
-  docs/                 # Szczegolowa dokumentacja
+## Project structure
+
+- `backend/api/` - REST endpoints and authentication
+- `backend/database/` - SQLite models and generated star catalog
+- `backend/tracking/` - position calculations and tracking loop
+- `frontend/views/` - EJS interface
+- `frontend/public/` - browser scripts, styles, and images
+- `scripts/` - catalog preparation, benchmarks, and tracking tests
+- `docs/` - architecture, API, tracking, and setup documentation
+
+## Validation
+
+The repository includes focused scripts rather than a single automated test suite:
+
+```bash
+python scripts/test_position.py
+python scripts/test_tracking_loop.py
+python scripts/benchmark_astropy.py
 ```
 
-## Znane problemy (WIP)
+The tracking loop test does not require physical motors.
 
-- **Overlay mapy nieba** - pierscienie elewacji i horyzont na mapie d3-celestial nie renderuja sie poprawnie (problem z mapowaniem wspolrzednych projekcji SVG na canvas overlay). Wbudowany horyzont d3-celestial dziala poprawnie.
+## Documentation
 
-## Dokumentacja
+Start with the [documentation index](docs/README.md) for detailed component and API references.
 
-Szczegolowa dokumentacja znajduje sie w folderze [docs/](docs/README.md).
+## Current limitations
 
-## Licencja
+- No physical mount driver is included
+- Deployment hardening is still required
+- The interactive sky map may need additional tuning depending on browser and display size
 
-Projekt studencki - SeeSky.
+## License
+
+No license has been granted for this repository unless a license file states otherwise.
