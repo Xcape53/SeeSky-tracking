@@ -2,6 +2,26 @@
 
 SeeSky Tracking is a control and observation interface for an amateur radio telescope on an altitude-azimuth mount. It combines astronomical coordinate calculations, a REST API, an observation queue, and a browser-based control panel.
 
+[Interface demo](https://xcape53.github.io/SeeSky-tracking/) · [Setup](#installation) · [Architecture and API](docs/README.md)
+
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="docs/profile/cover-dark.svg">
+<img alt="seesky functional overview" src="docs/profile/cover-light.svg" width="650">
+</picture>
+
+## About the project
+
+Developed for the **SeeSky radio telescope project in SimLE**, the student research club at Gdańsk University of Technology. Piotr Jeleniewicz leads software development, covering the Python backend, web interface and interactive sky visualisation.
+
+The browser demo is a static interface preview: enter any non-empty password to explore its screens. It does not connect to the backend, live star data or physical hardware. Hardware and SDR integration are the next stage of the wider project.
+
+<details>
+<summary>Interface preview</summary>
+
+<img src="docs/profile/interface-demo.jpg" alt="SeeSky tracking dashboard in static demo mode" width="900">
+
+</details>
+
 ## System overview
 
 - Python and Flask backend with JWT authentication
